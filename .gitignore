@@ -1,0 +1,21 @@
+# .NET / C# junk
+bin/
+obj/
+out/
+.vscode/
+.user/
+*.db
+*.db-journal
+
+# Secrets (IMPORTANT)
+appsettings.json
+appsettings.Development.json
+
+# Node / React junk
+node_modules/
+dist/
+.env
+.DS_Store
+
+# Logs
+*.log
