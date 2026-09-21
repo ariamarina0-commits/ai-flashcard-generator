@@ -16,22 +16,34 @@ function App() {
   const [isStudyMode, setIsStudyMode] = useState(false);
 
   const handleGenerate = async () => {
-    if (!inputText) return;
+    if (!inputText.trim()) return;
+
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:5265/api/Flashcard/generate', 
-        { text: inputText }, 
-        { headers: { 'Content-Type': 'application/json' } }
+      const response = await axios.post(
+        'http://localhost:5265/api/Flashcard/generate',
+        { text: inputText },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
       );
-    
+
       setCards(response.data);
       setCurrentIndex(0);
       setFlippedIndex(null);
-      setIsStudyMode(false); // Default to grid view when new cards arrive
+      setIsStudyMode(false);
     } catch (error: any) {
-      console.error("Server Error:", error.response?.data || error.message);
-      alert("The server didn't like that request. Check the console!");
+      console.error(
+        'Server Error:',
+        error.response?.data || error.message
+      );
+
+      alert(
+        "The server didn't like that request. Check the console!"
+      );
     } finally {
       setLoading(false);
     }
@@ -44,87 +56,259 @@ function App() {
 
   const prevCard = () => {
     setFlippedIndex(null);
-    setCurrentIndex((prev) => (prev - 1 + cards.length) % cards.length);
+    setCurrentIndex(
+      (prev) => (prev - 1 + cards.length) % cards.length
+    );
+  };
+
+  const toggleStudyMode = () => {
+    setIsStudyMode((prev) => !prev);
+    setFlippedIndex(null);
+    setCurrentIndex(0);
   };
 
   return (
-    <div className='App'>
-      <h1>🧠 AI Flashcard Generator</h1>
-      
-      {/* 1. Input Section: Hide when studying to save space */}
-      {!isStudyMode && (
-        <div className="input-area">
-          <textarea 
-            rows={5} 
-            style={{ width: '80%', padding: '10px', borderRadius: '8px' }}
-            placeholder="Paste your study notes here..."
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-          />
-          <br />
-          <button 
-            onClick={handleGenerate} 
-            disabled={loading} 
-            style={{ marginTop: '10px', padding: '10px 20px', cursor: 'pointer' }}
-          >
-            {loading ? '🪄 Generating...' : 'Create Flashcards'}
-          </button>
-        </div>
-      )}
-
-      {/* 2. Toggle Button: Only show if we actually have cards */}
-      {cards.length > 0 && (
-        <div style={{ margin: '20px' }}>
-          <button 
-            onClick={() => { setIsStudyMode(!isStudyMode); setFlippedIndex(null); }}
-            style={{ padding: '10px 20px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-          >
-            {isStudyMode ? "🔙 Back to Grid View" : "📖 Enter Study Mode"}
-          </button>
-        </div>
-      )}
-
-      {/* 3. Display Section */}
-      {isStudyMode && cards.length > 0 ? (
-        /* --- STUDY MODE VIEW --- */
-        <div className="study-container">
-          <div className="progress-bar" style={{ marginBottom: '10px', fontWeight: 'bold' }}>
-            Card {currentIndex + 1} of {cards.length}
+    <main className="app">
+      <div className="app-shell">
+        <header className="hero">
+          <div className="brand-badge">
+            <span className="brand-icon">✦</span>
+            AI FLASHCARDS
           </div>
 
-          <div 
-            className={`flashcard large ${flippedIndex === currentIndex ? 'flipped' : ''}`}
-            onClick={() => setFlippedIndex(flippedIndex === currentIndex ? null : currentIndex)}
-          >
-            <div className="flashcard-inner">
-              <div className="front">{cards[currentIndex].front}</div>
-              <div className="back">{cards[currentIndex].back}</div>
+          <h1>
+            Study smarter with <span>AI.</span>
+          </h1>
+
+          <p>
+            Turn your notes into interactive flashcards
+            and start studying in seconds.
+          </p>
+        </header>
+
+        {!isStudyMode && (
+          <section className="generator-section">
+            <div className="section-heading">
+              <div>
+                <span className="eyebrow">YOUR STUDY NOTES</span>
+                <h2>What are you learning today?</h2>
+              </div>
+
+              <span className="character-count">
+                {inputText.length} characters
+              </span>
             </div>
-          </div>
 
-          <div className="navigation" style={{ marginTop: '20px' }}>
-            <button onClick={prevCard} style={{ margin: '0 10px' }}>← Previous</button>
-            <button onClick={nextCard} style={{ margin: '0 10px' }}>Next →</button>
-          </div>
-        </div>
-      ) : (
-        /* --- GRID VIEW --- */
-        <div className="card-grid">
-          {cards.map((card, index) => (
-            <div 
-              key={index} 
-              className={`flashcard ${flippedIndex === index ? 'flipped' : ''}`}
-              onClick={() => setFlippedIndex(flippedIndex === index ? null : index)}
-            >
-              <div className="flashcard-inner">
-                <div className="front">{card.front}</div>
-                <div className="back">{card.back}</div>
+            <textarea
+              className="notes-input"
+              rows={8}
+              placeholder="Paste your lecture notes, textbook summary, or study material here..."
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+            />
+
+            <div className="generator-actions">
+              <p className="input-hint">
+                AI will turn your notes into question-and-answer
+                flashcards.
+              </p>
+
+              <button
+                className="primary-button"
+                onClick={handleGenerate}
+                disabled={loading || !inputText.trim()}
+              >
+                <span>{loading ? '✦' : '✦'}</span>
+                {loading ? 'Generating...' : 'Generate Flashcards'}
+              </button>
+            </div>
+          </section>
+        )}
+
+        {cards.length > 0 && !isStudyMode && (
+          <section className="flashcards-section">
+            <div className="flashcards-header">
+              <div>
+                <span className="eyebrow">YOUR FLASHCARDS</span>
+                <h2>Ready to study</h2>
+                <p>
+                  {cards.length} {cards.length === 1 ? 'card' : 'cards'} generated
+                  from your notes.
+                </p>
+              </div>
+
+              <button
+                className="secondary-button"
+                onClick={toggleStudyMode}
+              >
+                Enter Study Mode
+                <span>→</span>
+              </button>
+            </div>
+
+            <div className="card-grid">
+              {cards.map((card, index) => (
+                <button
+                  type="button"
+                  key={index}
+                  className={`flashcard ${
+                    flippedIndex === index ? 'flipped' : ''
+                  }`}
+                  onClick={() =>
+                    setFlippedIndex(
+                      flippedIndex === index ? null : index
+                    )
+                  }
+                  aria-label={`Flashcard ${index + 1}`}
+                >
+                  <div className="flashcard-inner">
+                    <div className="front">
+                      <div className="card-topline">
+                        <span>QUESTION</span>
+                        <span>
+                          {String(index + 1).padStart(2, '0')}
+                        </span>
+                      </div>
+
+                      <p>{card.front}</p>
+
+                      <span className="reveal-hint">
+                        Click to reveal answer
+                      </span>
+                    </div>
+
+                    <div className="back">
+                      <div className="card-topline">
+                        <span>ANSWER</span>
+                        <span>
+                          {String(index + 1).padStart(2, '0')}
+                        </span>
+                      </div>
+
+                      <p>{card.back}</p>
+
+                      <span className="reveal-hint">
+                        Click to see question
+                      </span>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {isStudyMode && cards.length > 0 && (
+          <section className="study-section">
+            <div className="study-header">
+              <button
+                className="back-button"
+                onClick={toggleStudyMode}
+              >
+                ← Back to all cards
+              </button>
+
+              <span className="eyebrow">STUDY MODE</span>
+
+              <h2>Focus on one card at a time.</h2>
+            </div>
+
+            <div className="study-progress">
+              <div className="progress-info">
+                <span>
+                  Card {currentIndex + 1} of {cards.length}
+                </span>
+
+                <span>
+                  {Math.round(
+                    ((currentIndex + 1) / cards.length) * 100
+                  )}
+                  %
+                </span>
+              </div>
+
+              <div className="progress-track">
+                <div
+                  className="progress-fill"
+                  style={{
+                    width: `${
+                      ((currentIndex + 1) / cards.length) * 100
+                    }%`,
+                  }}
+                />
               </div>
             </div>
-          ))}
-        </div>
-      )}
-    </div>
+
+            <button
+              type="button"
+              className={`flashcard study-card ${
+                flippedIndex === currentIndex ? 'flipped' : ''
+              }`}
+              onClick={() =>
+                setFlippedIndex(
+                  flippedIndex === currentIndex
+                    ? null
+                    : currentIndex
+                )
+              }
+            >
+              <div className="flashcard-inner">
+                <div className="front">
+                  <div className="card-topline">
+                    <span>QUESTION</span>
+                    <span>
+                      {String(currentIndex + 1).padStart(2, '0')}
+                    </span>
+                  </div>
+
+                  <p>{cards[currentIndex].front}</p>
+
+                  <span className="reveal-hint">
+                    Click to reveal answer
+                  </span>
+                </div>
+
+                <div className="back">
+                  <div className="card-topline">
+                    <span>ANSWER</span>
+                    <span>
+                      {String(currentIndex + 1).padStart(2, '0')}
+                    </span>
+                  </div>
+
+                  <p>{cards[currentIndex].back}</p>
+
+                  <span className="reveal-hint">
+                    Click to see question
+                  </span>
+                </div>
+              </div>
+            </button>
+
+            <div className="navigation">
+              <button
+                className="navigation-button"
+                onClick={prevCard}
+              >
+                ← Previous
+              </button>
+
+              <button
+                className="navigation-button next"
+                onClick={nextCard}
+              >
+                Next →
+              </button>
+            </div>
+          </section>
+        )}
+
+        <footer className="app-footer">
+          <span>AI Flashcard Generator</span>
+          <span>Built for focused learning.</span>
+        </footer>
+      </div>
+    </main>
   );
 }
 
