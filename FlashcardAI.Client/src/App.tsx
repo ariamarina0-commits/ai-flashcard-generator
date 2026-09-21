@@ -2,6 +2,9 @@ import { useState } from 'react';
 import axios from 'axios';
 import './App.css';
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || 'http://localhost:5265';
+
 interface Flashcard {
   front: string;
   back: string;
@@ -22,7 +25,7 @@ function App() {
 
     try {
       const response = await axios.post(
-        'http://localhost:5265/api/Flashcard/generate',
+        `${API_BASE_URL}/api/Flashcard/generate`,
         { text: inputText },
         {
           headers: {
